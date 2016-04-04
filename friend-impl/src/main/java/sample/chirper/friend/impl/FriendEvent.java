@@ -10,34 +10,33 @@ import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.lightbend.lagom.javadsl.persistence.AggregateEvent;
 import com.lightbend.lagom.javadsl.persistence.AggregateEventTag;
 import com.lightbend.lagom.serialization.Jsonable;
+import sample.chirper.common.UserId;
 
 public interface FriendEvent extends Jsonable, AggregateEvent<FriendEvent> {
 
   @Override
-  default public AggregateEventTag<FriendEvent> aggregateTag() {
+  default AggregateEventTag<FriendEvent> aggregateTag() {
     return FriendEventTag.INSTANCE;
   }
 
   @SuppressWarnings("serial")
   @Immutable
-  @JsonDeserialize
-  public class UserCreated implements FriendEvent {
-    public final String userId;
+  final class UserCreated implements FriendEvent {
+    public final UserId userId;
     public final String name;
     public final Instant timestamp;
 
-    public UserCreated(String userId, String name) {
+    public UserCreated(UserId userId, String name) {
       this(userId, name, Optional.empty());
     }
 
     @JsonCreator
-    private UserCreated(String userId, String name, Optional<Instant> timestamp) {
+    private UserCreated(UserId userId, String name, Optional<Instant> timestamp) {
       this.userId = Preconditions.checkNotNull(userId, "userId");
       this.name = Preconditions.checkNotNull(name, "name");
       this.timestamp = timestamp.orElseGet(() -> Instant.now());
@@ -72,18 +71,17 @@ public interface FriendEvent extends Jsonable, AggregateEvent<FriendEvent> {
 
   @SuppressWarnings("serial")
   @Immutable
-  @JsonDeserialize
-  public class FriendAdded implements FriendEvent {
-    public final String userId;
-    public final String friendId;
+  final class FriendAdded implements FriendEvent {
+    public final UserId userId;
+    public final UserId friendId;
     public final Instant timestamp;
 
-    public FriendAdded(String userId, String friendId) {
+    public FriendAdded(UserId userId, UserId friendId) {
       this(userId, friendId, Optional.empty());
     }
 
     @JsonCreator
-    public FriendAdded(String userId, String friendId, Optional<Instant> timestamp) {
+    public FriendAdded(UserId userId, UserId friendId, Optional<Instant> timestamp) {
       this.userId = Preconditions.checkNotNull(userId, "userId");
       this.friendId = Preconditions.checkNotNull(friendId, "friendId");
       this.timestamp = timestamp.orElseGet(() -> Instant.now());
@@ -115,5 +113,4 @@ public interface FriendEvent extends Jsonable, AggregateEvent<FriendEvent> {
           .add("timestamp", timestamp).toString();
     }
   }
-
 }

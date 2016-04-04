@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 
+import com.lightbend.lagom.javadsl.server.HeaderServiceCall;
 import org.pcollections.PSequence;
 import org.pcollections.TreePVector;
 
@@ -20,12 +21,12 @@ import com.lightbend.lagom.javadsl.persistence.cassandra.CassandraReadSide;
 import com.lightbend.lagom.javadsl.persistence.cassandra.CassandraSession;
 
 import akka.NotUsed;
-import sample.chirper.friend.api.FriendId;
+import sample.chirper.common.server.Authenticated;
+import sample.chirper.friend.api.FriendRequest;
+import sample.chirper.common.UserId;
 import sample.chirper.friend.api.FriendService;
 import sample.chirper.friend.api.User;
-import sample.chirper.friend.impl.FriendCommand.AddFriend;
-import sample.chirper.friend.impl.FriendCommand.CreateUser;
-import sample.chirper.friend.impl.FriendCommand.GetUser;
+import sample.chirper.friend.impl.FriendCommand.*;
 
 public class FriendServiceImpl implements FriendService {
 
@@ -43,13 +44,13 @@ public class FriendServiceImpl implements FriendService {
   }
 
   @Override
-  public ServiceCall<String, NotUsed, User> getUser() {
+  public ServiceCall<UserId, NotUsed, User> getUser() {
     return (id, request) -> {
       return friendEntityRef(id).ask(new GetUser()).thenApply(reply -> {
         if (reply.user.isPresent())
           return reply.user.get();
         else
-          throw new NotFound("user " + id + " not found");
+          throw new NotFound(id + " not found");
       });
     };
   }
@@ -63,27 +64,29 @@ public class FriendServiceImpl implements FriendService {
   }
 
   @Override
-  public ServiceCall<String, FriendId, NotUsed> addFriend() {
-    return (id, request) -> {
-      return friendEntityRef(id).ask(new AddFriend(request.friendId))
-          .thenApply(ack -> NotUsed.getInstance());
-    };
+  public ServiceCall<FriendRequest, NotUsed, NotUsed> addFriend() {
+    return Authenticated.enforceUserId(FriendRequest::getUserId,
+        (friendRequest, notUsed) ->
+          friendEntityRef(friendRequest.userId)
+              .ask(new AddFriend(friendRequest.friendId))
+              .thenApply(ack -> NotUsed.getInstance())
+    );
   }
 
   @Override
-  public ServiceCall<String, NotUsed, PSequence<String>> getFollowers() {
+  public ServiceCall<UserId, NotUsed, PSequence<UserId>> getFollowers() {
     return (userId, req) -> {
-      CompletionStage<PSequence<String>> result = db.selectAll("SELECT * FROM follower WHERE userId = ?", userId)
+      CompletionStage<PSequence<UserId>> result = db.selectAll("SELECT * FROM follower WHERE userId = ?", userId.userId)
         .thenApply(rows -> {
-        List<String> followers = rows.stream().map(row -> row.getString("followedBy")).collect(Collectors.toList());
+        List<UserId> followers = rows.stream().map(row -> new UserId(row.getString("followedBy"))).collect(Collectors.toList());
         return TreePVector.from(followers);
       });
       return result;
     };
   }
 
-  private PersistentEntityRef<FriendCommand> friendEntityRef(String userId) {
-    PersistentEntityRef<FriendCommand> ref = persistentEntities.refFor(FriendEntity.class, userId);
+  private PersistentEntityRef<FriendCommand> friendEntityRef(UserId userId) {
+    PersistentEntityRef<FriendCommand> ref = persistentEntities.refFor(FriendEntity.class, userId.userId);
     return ref;
   }
 

@@ -18,6 +18,7 @@ import org.pcollections.PSequence;
 import org.pcollections.TreePVector;
 import sample.chirper.activity.api.ActivityStreamService;
 import sample.chirper.chirp.api.*;
+import sample.chirper.common.UserId;
 import sample.chirper.friend.api.*;
 
 import akka.NotUsed;
@@ -84,7 +85,7 @@ public class ActivityStreamServiceTest {
     }
 
     @Override
-    public ServiceCall<String, FriendId, NotUsed> addFriend() {
+    public ServiceCall<String, UserId, NotUsed> addFriend() {
       return (id, req) -> completedFuture(NotUsed.getInstance());
     }
 

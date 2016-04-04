@@ -12,14 +12,15 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
+import sample.chirper.common.UserId;
 
 @Immutable
 @JsonDeserialize
 public final class LiveChirpsRequest {
-  public final PSequence<String> userIds;
+  public final PSequence<UserId> userIds;
 
   @JsonCreator
-  public LiveChirpsRequest(PSequence<String> userIds) {
+  public LiveChirpsRequest(PSequence<UserId> userIds) {
      this.userIds = Preconditions.checkNotNull(userIds, "userIds");
   }
 

@@ -16,7 +16,7 @@ import com.lightbend.lagom.javadsl.persistence.cassandra.CassandraReadSideProces
 import com.lightbend.lagom.javadsl.persistence.cassandra.CassandraSession;
 
 import akka.Done;
-import sample.chirper.friend.impl.FriendEvent.FriendAdded;
+import sample.chirper.friend.impl.FriendEvent.*;
 
 public class FriendEventProcessor extends CassandraReadSideProcessor<FriendEvent> {
 
@@ -41,9 +41,9 @@ public class FriendEventProcessor extends CassandraReadSideProcessor<FriendEvent
     // @formatter:off
     return
       prepareCreateTables(session).thenCompose(a ->
-      prepareWriteFollowers(session).thenCompose(b ->
-      prepareWriteOffset(session).thenCompose(c ->
-      selectOffset(session))));
+      prepareWriteFollowers(session)).thenCompose(a ->
+      prepareWriteOffset(session)).thenCompose(a ->
+      selectOffset(session));
     // @formatter:on
   }
 
@@ -67,6 +67,7 @@ public class FriendEventProcessor extends CassandraReadSideProcessor<FriendEvent
     });
   }
 
+
   private CompletionStage<Done> prepareWriteOffset(CassandraSession session) {
     return session.prepare("INSERT INTO friend_offset (partition, offset) VALUES (1, ?)").thenApply(ps -> {
       setWriteOffset(ps);
@@ -82,18 +83,16 @@ public class FriendEventProcessor extends CassandraReadSideProcessor<FriendEvent
 
   @Override
   public EventHandlers defineEventHandlers(EventHandlersBuilder builder) {
-    builder.setEventHandler(FriendAdded.class, this::processFriendChanged);
+    builder.setEventHandler(FriendAdded.class, this::processFriendAdded);
     return builder.build();
   }
 
-  private CompletionStage<List<BoundStatement>> processFriendChanged(FriendAdded event, UUID offset) {
+  private CompletionStage<List<BoundStatement>> processFriendAdded(FriendAdded event, UUID offset) {
     BoundStatement bindWriteFollowers = writeFollowers.bind();
-    bindWriteFollowers.setString("userId", event.friendId);
-    bindWriteFollowers.setString("followedBy", event.userId);
+    bindWriteFollowers.setString("userId", event.friendId.getUserId());
+    bindWriteFollowers.setString("followedBy", event.userId.getUserId());
+
     BoundStatement bindWriteOffset = writeOffset.bind(offset);
     return completedStatements(Arrays.asList(bindWriteFollowers, bindWriteOffset));
   }
-
-
-
 }

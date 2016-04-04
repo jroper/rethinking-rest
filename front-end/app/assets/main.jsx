@@ -8,20 +8,37 @@ var Link = ReactRouter.Link;
 /**
  * Send a JSON message to the server.
  *
- * This method basically delegates to $.ajax, and so has the same semantics as that, however, before doing so it
+ * This method basically delegates to ajax, and so has the same semantics as that, however, before doing so it
  * converts params.data to a JSON string, and sets the content type to application/json.
  *
  * @params The params object, as per the jquery $.ajax method.
- * @returns The result of the $.ajax method (a promise).
+ * @returns The result of the ajax method (a promise).
  */
 function sendJson(params) {
     params.data = JSON.stringify(params.data);
     params.contentType = "application/json";
+    return ajax(params);
+}
+
+function currentUser() {
+    return JSON.parse(localStorage.user);
+}
+
+/**
+ * Like $.ajax, but adds the user token to the header so its authenticated.
+ */
+function ajax(params) {
+    if (!params.headers) {
+        params.headers = {};
+    }
+    if (localStorage.userId) {
+        params.headers["User-Token"] = localStorage.userId;
+    }
     return $.ajax(params);
 }
 
 function getUser(userId) {
-    return $.ajax({
+    return ajax({
         url: "/api/users/" + userId,
         type: "GET"
     }).then(
@@ -34,8 +51,90 @@ function getUser(userId) {
     );
 }
 
-var Chirp = React.createClass({
+var ChirpLikers = React.createClass({
+    getInitialState: function() {
+        return {
+            likers: []
+        };
+    },
+    likesUrl: function() {
+        return "/api/chirps/" + this.props.userId + "/" + this.props.chirpId + "/likes";
+    },
+    componentDidMount: function() {
+        ajax({
+            type: "GET",
+            url: this.likesUrl()
+        }).then(function(data) {
+            this.setState({likers: data});
+            this.props.likersCount(data.length);
+        }.bind(this));
+    },
+    like: function(evt) {
+        evt.preventDefault();
+        ajax({
+            type: "PUT",
+            url: this.likesUrl() + "/" + localStorage.userId
+        }).then(function() {
+            var newLikers = this.state.likers.concat([localStorage.userId]);
+            this.setState({likers: newLikers});
+            this.props.likersCount(newLikers.length);
+        }.bind(this));
+    },
+    unlike: function(evt) {
+        evt.preventDefault();
+        ajax({
+            type: "DELETE",
+            url: this.likesUrl() + "/" + localStorage.userId
+        }).then(function() {
+            var idx = this.state.likers.indexOf(localStorage.userId);
+            if (idx >= 0) {
+                var newLikers = this.state.likers.slice();
+                newLikers.splice(idx, 1);
+                this.setState({likers: newLikers});
+                this.props.likersCount(newLikers.length);
+            }
+        }.bind(this));
+    },
     render: function() {
+        var msg = "Like";
+        var action = this.like;
+        if (this.state.likers.indexOf(localStorage.userId) >= 0) {
+            msg = "Unlike";
+            action = this.unlike;
+        }
+        return (
+            <div className="likers">
+                <ul>
+                    {this.state.likers.map(function(liker) {
+                        return <li key={liker}>{liker}</li>
+                    })}
+                </ul>
+                <a href="#" className="btn" onClick={action}>{msg}</a>
+            </div>
+        );
+    }
+});
+
+var Chirp = React.createClass({
+    getInitialState: function() {
+        return {
+            likes: this.props.likes,
+            displayLikers: false
+        };
+    },
+    toggleDisplayLikers: function(evt) {
+        evt.preventDefault();
+        this.setState({displayLikers: !this.state.displayLikers});
+    },
+    likersCount: function(likes) {
+        this.setState({likes: likes})
+    },
+    render: function() {
+        var likers;
+        if (this.state.displayLikers) {
+            likers = <ChirpLikers userId={this.props.userId} chirpId={this.props.chirpId}
+                likersCount={this.likersCount} />
+        }
         return (
             <div className="chirp">
                 <h3 className="chirpUser">
@@ -44,6 +143,10 @@ var Chirp = React.createClass({
                     </Link>
                 </h3>
                 {this.props.children}
+                <a href="#" className="likes" onClick={this.toggleDisplayLikers}>
+                    {this.state.likes} likes
+                </a>
+                {likers}
                 <hr />
             </div>
         );
@@ -51,7 +154,7 @@ var Chirp = React.createClass({
 });
 
 function createUserStream(userId) {
-    return createStream("/api/chirps/live", function(stream) {
+    return createStream("/api/chirpstream/live", function(stream) {
         stream.send(JSON.stringify({userIds: [userId]}));
     });
 }
@@ -59,6 +162,24 @@ function createUserStream(userId) {
 function createActivityStream(userId) {
     return createStream("/api/activity/" + userId + "/live");
 }
+
+var ActivityStream = React.createClass({
+    getInitialState: function() {
+        return {users: {}};
+    },
+    render: function() {
+        return (
+            <ContentLayout subtitle="Chirps feed">
+                <Section>
+                    <div className="small-12 columns">
+                        <ChirpForm />
+                        <ChirpStream stream={createActivityStream(localStorage.userId)} users={this.state.users} />
+                    </div>
+                </Section>
+            </ContentLayout>
+        );
+    }
+});
 
 function createStream(path, onopen) {
     return {
@@ -122,7 +243,8 @@ var ChirpStream = React.createClass({
                 userName = chirp.userId;
             }
             return (
-                <Chirp userId={chirp.userId} userName={userName} key={chirp.uuid}>
+                <Chirp userId={chirp.userId} userName={userName} chirpId={chirp.uuid}
+                       key={chirp.uuid} likes={chirp.likes}>
                     {chirp.message}
                 </Chirp>
             );
@@ -151,7 +273,7 @@ var ChirpForm = React.createClass({
             return;
         }
         sendJson({
-            url: "/api/chirps/live/" + localStorage.userId,
+            url: "/api/chirps/" + localStorage.userId,
             type: 'POST',
             data: {
                 userId: localStorage.userId,
@@ -193,15 +315,12 @@ var AddFriendPage = React.createClass({
         if (!friendId) {
             return;
         }
-        // First, validate that the friend exsits
+        // First, validate that the friend exists
         getUser(friendId).then(function(friend) {
             if (friend) {
                 sendJson({
-                    url: "/api/users/" + localStorage.userId + "/friends",
-                    type: 'POST',
-                    data: {
-                        friendId: friendId
-                    },
+                    url: "/api/users/" + localStorage.userId + "/friends/" + friendId,
+                    type: 'PUT',
                     success: function() {
                         this.setState({friendId: ""});
                         this.props.history.pushState(null, "/");
@@ -234,24 +353,6 @@ var AddFriendPage = React.createClass({
                             {error}
                             <input type="submit" value="Add Friend" />
                         </form>
-                    </div>
-                </Section>
-            </ContentLayout>
-        );
-    }
-});
-
-var ActivityStream = React.createClass({
-    getInitialState: function() {
-        return {users: {}};
-    },
-    render: function() {
-        return (
-            <ContentLayout subtitle="Chirps feed">
-                <Section>
-                    <div className="small-12 columns">
-                        <ChirpForm />
-                        <ChirpStream stream={createActivityStream(localStorage.userId)} users={this.state.users} />
                     </div>
                 </Section>
             </ContentLayout>
@@ -382,7 +483,7 @@ var SignUpPage = React.createClass({
                 localStorage.userId = userId;
                 this.props.history.pushState(null, "/");
             }.bind(this), function() {
-                this.setState("User " + userId + " already exists.");
+                this.setState({error: "User " + userId + " already exists."});
             }.bind(this));
         }
     },
@@ -449,6 +550,7 @@ var PageLayout = React.createClass({
         if (this.props.user) {
             links = (
                 <div className="tertiary-nav">
+                    <Link to="/friendRequests">Friend Requests</Link>,
                     <Link to="/addFriend">Add Friend</Link>,
                     <Link to="/">Feed</Link>,
                     <Link to={"/users/" + this.props.user.userId }>{this.props.user.name}</Link>
@@ -511,6 +613,7 @@ var App = React.createClass({
         if (localStorage.userId) {
             getUser(localStorage.userId).then(function (user) {
                 if (user) {
+                    localStorage.user = JSON.stringify(user);
                     this.setState({loginChecked: true, user: user});
                 } else {
                     localStorage.removeItem("userId");
@@ -522,6 +625,7 @@ var App = React.createClass({
         }
     },
     handleLogin: function(user) {
+        localStorage.user = JSON.stringify(user);
         this.setState({user: user});
     },
     logout: function(e) {

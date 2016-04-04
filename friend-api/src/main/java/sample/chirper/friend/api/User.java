@@ -12,23 +12,22 @@ import org.pcollections.PSequence;
 import org.pcollections.TreePVector;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
+import sample.chirper.common.UserId;
 
 @Immutable
-@JsonDeserialize
 public final class User {
-  public final String userId;
+  public final UserId userId;
   public final String name;
-  public final PSequence<String> friends;
+  public final PSequence<UserId> friends;
 
-  public User(String userId, String name) {
+  public User(UserId userId, String name) {
     this(userId, name, Optional.empty());
   }
 
   @JsonCreator
-  public User(String userId, String name, Optional<PSequence<String>> friends) {
+  public User(UserId userId, String name, Optional<PSequence<UserId>> friends) {
     this.userId = Preconditions.checkNotNull(userId, "userId");
     this.name = Preconditions.checkNotNull(name, "name");
     this.friends = friends.orElse(TreePVector.empty());

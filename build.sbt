@@ -1,15 +1,27 @@
-import ByteConversions._
+//import ByteConversions._
 
 organization in ThisBuild := "sample.chirper"
 
 // the Scala version that will be used for cross-compiled libraries
 scalaVersion in ThisBuild := "2.11.7"
 
-lazy val friendApi = project("friend-api")
+lazy val apiCommon = project("api-common")
   .settings(
     version := "1.0-SNAPSHOT",
     libraryDependencies += lagomJavadslApi
   )
+
+lazy val serverCommon = project("server-common")
+  .settings(
+    version := "1.0-SNAPSHOT",
+    libraryDependencies += lagomJavadslServer
+  ).dependsOn(apiCommon)
+
+lazy val friendApi = project("friend-api")
+  .settings(
+    version := "1.0-SNAPSHOT",
+    libraryDependencies += lagomJavadslApi
+  ).dependsOn(apiCommon)
 
 lazy val friendImpl = project("friend-impl")
   .enablePlugins(LagomJava)
@@ -21,7 +33,7 @@ lazy val friendImpl = project("friend-impl")
     )
   )
   .settings(lagomForkedTestSettings: _*)
-  .dependsOn(friendApi)
+  .dependsOn(friendApi, serverCommon)
 
 lazy val chirpApi = project("chirp-api")
   .settings(
@@ -30,7 +42,7 @@ lazy val chirpApi = project("chirp-api")
       lagomJavadslApi,
       lagomJavadslJackson
     )
-  )
+  ).dependsOn(apiCommon, likeApi)
 
 lazy val chirpImpl = project("chirp-impl")
   .enablePlugins(LagomJava)
@@ -43,14 +55,14 @@ lazy val chirpImpl = project("chirp-impl")
     )
   )
   .settings(lagomForkedTestSettings: _*)
-  .dependsOn(chirpApi)
+  .dependsOn(chirpApi, serverCommon)
 
 lazy val activityStreamApi = project("activity-stream-api")
   .settings(
     version := "1.0-SNAPSHOT",
     libraryDependencies += lagomJavadslApi
   )
-  .dependsOn(chirpApi)
+  .dependsOn(chirpApi, apiCommon)
 
 lazy val activityStreamImpl = project("activity-stream-impl")
   .enablePlugins(LagomJava)
@@ -58,7 +70,29 @@ lazy val activityStreamImpl = project("activity-stream-impl")
     version := "1.0-SNAPSHOT",
     libraryDependencies += lagomJavadslTestKit
   )
-  .dependsOn(activityStreamApi, chirpApi, friendApi)
+  .dependsOn(activityStreamApi, chirpApi, friendApi, serverCommon)
+
+lazy val likeApi = project("like-api")
+  .settings(
+    version := "1.0-SNAPSHOT",
+    libraryDependencies ++= Seq(
+      lagomJavadslApi,
+      lagomJavadslJackson
+    )
+  ).dependsOn(apiCommon)
+
+lazy val likeImpl = project("like-impl")
+  .enablePlugins(LagomJava)
+  .settings(
+    version := "1.0-SNAPSHOT",
+    libraryDependencies ++= Seq(
+      lagomJavadslPersistence,
+      lagomJavadslPubSub,
+      lagomJavadslTestKit
+    )
+  )
+  .settings(lagomForkedTestSettings: _*)
+  .dependsOn(likeApi, serverCommon)
 
 lazy val frontEnd = project("front-end")
   .enablePlugins(PlayJava, LagomPlay)
@@ -69,30 +103,30 @@ lazy val frontEnd = project("front-end")
       "org.webjars" % "react" % "0.14.3",
       "org.webjars" % "react-router" % "1.0.3",
       "org.webjars" % "jquery" % "2.2.0",
-      "org.webjars" % "foundation" % "5.3.0",
-      "com.typesafe.conductr" %% "lagom10-conductr-bundle-lib" % "1.4.1"
+      "org.webjars" % "foundation" % "5.3.0"
+//      "com.typesafe.conductr" %% "lagom10-conductr-bundle-lib" % "1.4.1"
     ),
     // needed to resolve lagom10-conductr-bundle-lib
     resolvers += Resolver.bintrayRepo("typesafe", "maven-releases"),
-    ReactJsKeys.sourceMapInline := true,
+    ReactJsKeys.sourceMapInline := true
     // ConductR settings
-    BundleKeys.nrOfCpus := 1.0,
+/*    BundleKeys.nrOfCpus := 1.0,
     BundleKeys.memory := 64.MiB,
     BundleKeys.diskSpace := 35.MB,
     BundleKeys.endpoints := Map("web" -> Endpoint("http", services = Set(URI("http://:9000")))),
     javaOptions in Bundle ++= Seq("-Dhttp.address=$WEB_BIND_IP", "-Dhttp.port=$WEB_BIND_PORT")
-  )
+*/  )
 
 lazy val loadTestApi = project("load-test-api")
   .settings(
     version := "1.0-SNAPSHOT",
     libraryDependencies += lagomJavadslApi
-  )
+  ).dependsOn(apiCommon)
 
 lazy val loadTestImpl = project("load-test-impl")
   .enablePlugins(LagomJava)
   .settings(version := "1.0-SNAPSHOT")
-  .dependsOn(loadTestApi, friendApi, activityStreamApi, chirpApi)
+  .dependsOn(loadTestApi, friendApi, activityStreamApi, chirpApi, serverCommon)
 
 def project(id: String) = Project(id, base = file(id))
   .settings(eclipseSettings: _*)
@@ -112,10 +146,7 @@ lazy val eclipseSettings = Seq(
   EclipseKeys.createSrc := EclipseCreateSrc.Default + EclipseCreateSrc.Resource,
   EclipseKeys.eclipseOutput := Some(".target"),
   EclipseKeys.withSource := true,
-  EclipseKeys.withJavadoc := true,
-  // avoid some scala specific source directories
-  unmanagedSourceDirectories in Compile := Seq((javaSource in Compile).value),
-  unmanagedSourceDirectories in Test := Seq((javaSource in Test).value)
+  EclipseKeys.withJavadoc := true
 )
 
 // do not delete database files on start

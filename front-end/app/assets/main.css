@@ -837,3 +837,6 @@ input[type=submit]:hover {
   background: #127796;
   text-decoration: none;
 }
+.likes {
+  display: block;
+}

@@ -9,11 +9,15 @@ import akka.NotUsed;
 import com.lightbend.lagom.javadsl.api.ServiceCall;
 import com.lightbend.lagom.javadsl.api.Descriptor;
 import com.lightbend.lagom.javadsl.api.Service;
+import com.lightbend.lagom.javadsl.api.deser.IdSerializers;
+import sample.chirper.common.UserId;
+import sample.chirper.common.UserIdentificationStrategy;
+
 import static com.lightbend.lagom.javadsl.api.Service.*;
 
 public interface ChirpService extends Service {
 
-  ServiceCall<String, Chirp, NotUsed> addChirp();
+  ServiceCall<UserId, Chirp, NotUsed> addChirp();
   
   ServiceCall<NotUsed, LiveChirpsRequest, Source<Chirp, ?>> getLiveChirps();
   
@@ -23,10 +27,12 @@ public interface ChirpService extends Service {
   default Descriptor descriptor() {
     // @formatter:off
     return named("chirpservice").with(
-        pathCall("/api/chirps/live/:userId", addChirp()),
-        pathCall("/api/chirps/live", getLiveChirps()),
-        pathCall("/api/chirps/history", getHistoricalChirps())
-      ).withAutoAcl(true);
+        pathCall("/api/chirps/:userId", addChirp()),
+        pathCall("/api/chirpstream/live", getLiveChirps()),
+        pathCall("/api/chirpstream/history", getHistoricalChirps())
+      ).withAutoAcl(true).with(UserId.class,
+        IdSerializers.create("UserId", UserId::new, UserId::getUserId))
+        .withServiceIdentificationStrategy(UserIdentificationStrategy.INSTANCE);
     // @formatter:on
   }
 }

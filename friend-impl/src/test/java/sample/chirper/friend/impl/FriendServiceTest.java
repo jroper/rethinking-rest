@@ -10,7 +10,7 @@ import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 import org.pcollections.PSequence;
 import org.pcollections.TreePVector;
-import sample.chirper.friend.api.FriendId;
+import sample.chirper.common.UserId;
 import sample.chirper.friend.api.FriendService;
 import sample.chirper.friend.api.User;
 import scala.concurrent.duration.FiniteDuration;
@@ -30,8 +30,8 @@ public class FriendServiceTest {
       User usr3 = new User("usr3", "User 3");
       friendService.createUser().invoke(usr3).toCompletableFuture().get(3, SECONDS);
 
-      friendService.addFriend().invoke("usr1", new FriendId(usr2.userId)).toCompletableFuture().get(3, SECONDS);
-      friendService.addFriend().invoke("usr1", new FriendId(usr3.userId)).toCompletableFuture().get(3, SECONDS);
+      friendService.addFriend().invoke("usr1", new UserId(usr2.userId)).toCompletableFuture().get(3, SECONDS);
+      friendService.addFriend().invoke("usr1", new UserId(usr3.userId)).toCompletableFuture().get(3, SECONDS);
 
       User fetchedUsr1 = friendService.getUser().invoke("usr1", NotUsed.getInstance()).toCompletableFuture().get(3,
           SECONDS);

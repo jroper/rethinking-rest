@@ -12,15 +12,16 @@ import org.pcollections.PSequence;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.google.common.base.Preconditions;
+import sample.chirper.common.UserId;
 
 @Immutable
 public final class HistoricalChirpsRequest {
 
   public final Instant fromTime;
-  public final PSequence<String> userIds;
+  public final PSequence<UserId> userIds;
 
   @JsonCreator
-  public HistoricalChirpsRequest(Instant fromTime, PSequence<String> userIds) {
+  public HistoricalChirpsRequest(Instant fromTime, PSequence<UserId> userIds) {
     this.fromTime = Preconditions.checkNotNull(fromTime, "fromTime");
     this.userIds = Preconditions.checkNotNull(userIds, "userIds");
   }

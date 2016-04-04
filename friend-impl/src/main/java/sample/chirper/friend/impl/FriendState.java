@@ -8,19 +8,20 @@ import java.util.Optional;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 
+import org.pcollections.HashTreePSet;
 import org.pcollections.PSequence;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.lightbend.lagom.serialization.Jsonable;
 
+import org.pcollections.PSet;
 import sample.chirper.friend.api.User;
+import sample.chirper.common.UserId;
 
 @SuppressWarnings("serial")
 @Immutable
-@JsonDeserialize
 public final class FriendState implements Jsonable {
 
   public final Optional<User> user;
@@ -30,10 +31,10 @@ public final class FriendState implements Jsonable {
     this.user = Preconditions.checkNotNull(user, "user");
   }
 
-  public FriendState addFriend(String friendUserId) {
+  public FriendState addFriend(UserId friendUserId) {
     if (!user.isPresent())
       throw new IllegalStateException("friend can't be added before user is created");
-    PSequence<String> newFriends = user.get().friends.plus(friendUserId);
+    PSequence<UserId> newFriends = user.get().friends.plus(friendUserId);
     return new FriendState(Optional.of(new User(user.get().userId, user.get().name, Optional.of(newFriends))));
   }
 

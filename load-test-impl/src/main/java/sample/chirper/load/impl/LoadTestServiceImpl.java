@@ -20,7 +20,8 @@ import play.Logger.ALogger;
 import sample.chirper.activity.api.ActivityStreamService;
 import sample.chirper.chirp.api.Chirp;
 import sample.chirper.chirp.api.ChirpService;
-import sample.chirper.friend.api.FriendId;
+import sample.chirper.common.UserId;
+import sample.chirper.friend.api.FriendRequest;
 import sample.chirper.friend.api.FriendService;
 import sample.chirper.friend.api.User;
 import sample.chirper.load.api.LoadTestService;
@@ -76,7 +77,7 @@ public class LoadTestServiceImpl implements LoadTestService {
     log.info("Starting load with parameters: " + params + ", users prefixed with: " + userIdPrefix);
     Source<Integer, ?> userNumbers = Source.range(1, params.users);
     Source<User, ?> users = userNumbers
-        .map(n -> new User(userIdPrefix + n, userIdPrefix.toUpperCase() + n));
+        .map(n -> new User(new UserId(userIdPrefix + n), userIdPrefix.toUpperCase() + n));
     Source<String, ?> createdUsers = users
         .mapAsync(params.parallelism, user -> friendService.createUser().invoke(user))
         .via(summary("created users"));
@@ -91,17 +92,17 @@ public class LoadTestServiceImpl implements LoadTestService {
 
     final AtomicLong chirpCount = new AtomicLong();
     Source<String, ?> addedFriends = friendPairs.mapAsyncUnordered(params.parallelism, pair -> {
-      CompletionStage<NotUsed> invoked = friendService.addFriend().invoke(
-          userIdPrefix + pair.first(), new FriendId(userIdPrefix + pair.second()));
+      FriendRequest request = new FriendRequest(new UserId(userIdPrefix + pair.first()), new UserId(userIdPrefix + pair.second()));
+      CompletionStage<NotUsed> added = friendService.addFriend().invoke(request, NotUsed.getInstance());
       // start clients when last friend association has been created
       if (params.users == pair.first() && (params.users + params.friends) == pair.second())
-        invoked.thenAccept(a -> startClients(params.clients, userIdPrefix, chirpCount, runSeqNr));
-      return invoked;
+        added.thenAccept(a -> startClients(params.clients, userIdPrefix, chirpCount, runSeqNr));
+      return added;
     }).via(summary("added friends"));
 
     Source<Integer, ?> chirpNumbers = Source.range(1, params.chirps);
     Source<Chirp, ?> chirps = chirpNumbers.map(n -> {
-      String userId = userIdPrefix + (n % params.users);
+      UserId userId = new UserId(userIdPrefix + (n % params.users));
       String message = "Hello " + n + " from " + userId;
       return new Chirp(userId, message);
     });
@@ -156,7 +157,7 @@ public class LoadTestServiceImpl implements LoadTestService {
   private void startClients(int numberOfClients, String userIdPrefix, AtomicLong chirpCount, long runSeqNr) {
     log.info("starting " + numberOfClients + " clients for users prefixed with " + userIdPrefix);
     for (int n = 1; n <= numberOfClients; n++) {
-      activityService.getLiveActivityStream().invoke(userIdPrefix + n, NotUsed.getInstance()).thenAccept(src -> {
+      activityService.getLiveActivityStream().invoke(new UserId(userIdPrefix + n), NotUsed.getInstance()).thenAccept(src -> {
         src
           .map( chirp -> {
             if (runSeq.get() != runSeqNr) {
