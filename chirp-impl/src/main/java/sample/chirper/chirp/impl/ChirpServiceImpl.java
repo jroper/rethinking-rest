@@ -76,8 +76,7 @@ public class ChirpServiceImpl implements ChirpService {
 
         // We currently ignore the fact that it is possible to get duplicate chirps
         // from the recent and the topic. That can be solved with a de-duplication stage.
-        return Source.from(recentChirps).concat(publishedChirps)
-            .mapAsync(2, this::updateChirpLikes);
+        return Source.from(recentChirps).concat(publishedChirps);
       });
     };
   }
@@ -93,8 +92,7 @@ public class ChirpServiceImpl implements ChirpService {
         // Chirps from one user are ordered by timestamp, but chirps from different
         // users are not ordered. That can be improved by implementing a smarter
         // merge that takes the timestamps into account.
-      Source<Chirp, ?> result = Source.from(sources).flatMapMerge(sources.size(), s -> s)
-        .mapAsync(2, this::updateChirpLikes);
+      Source<Chirp, ?> result = Source.from(sources).flatMapMerge(sources.size(), s -> s);
       return CompletableFuture.completedFuture(result);
     };
   }

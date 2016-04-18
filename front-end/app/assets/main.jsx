@@ -163,17 +163,25 @@ function createActivityStream(userId) {
     return createStream("/api/activity/" + userId + "/live");
 }
 
+function createFriendsStream(friendIds) {
+    return createStream("/api/chirpstream/live", function(stream) {
+        stream.send(JSON.stringify({userIds: friendIds}));
+    });
+}
+
+
 var ActivityStream = React.createClass({
     getInitialState: function() {
         return {users: {}};
     },
     render: function() {
+        var friendIds = currentUser().friends.concat(localStorage.userId);
         return (
             <ContentLayout subtitle="Chirps feed">
                 <Section>
                     <div className="small-12 columns">
                         <ChirpForm />
-                        <ChirpStream stream={createActivityStream(localStorage.userId)} users={this.state.users} />
+                        <ChirpStream stream={createFriendsStream(friendIds)} users={this.state.users} />
                     </div>
                 </Section>
             </ContentLayout>
