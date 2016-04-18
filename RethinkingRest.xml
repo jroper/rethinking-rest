@@ -1,0 +1,227 @@
+<templateSet group="RethinkingRest">
+  <template name="ls1" value="return CompletableFuture.completedFuture(&#10;    $END$&#10;);&#10;" toReformat="false" toShortenFQNames="true">
+    <context>
+      <option name="JAVA_CODE" value="true" />
+      <option name="JAVA_STATEMENT" value="true" />
+      <option name="JAVA_EXPRESSION" value="true" />
+      <option name="JAVA_DECLARATION" value="true" />
+      <option name="JAVA_COMMENT" value="true" />
+      <option name="JAVA_STRING" value="true" />
+      <option name="COMPLETION" value="true" />
+    </context>
+  </template>
+  <template name="ls2" value="persistentEntities.eventStream(LikeEventTag.INSTANCE, offset)&#10;    $END$" toReformat="false" toShortenFQNames="true">
+    <context>
+      <option name="JAVA_CODE" value="true" />
+      <option name="JAVA_STATEMENT" value="true" />
+      <option name="JAVA_EXPRESSION" value="true" />
+      <option name="JAVA_DECLARATION" value="true" />
+      <option name="JAVA_COMMENT" value="true" />
+      <option name="JAVA_STRING" value="true" />
+      <option name="COMPLETION" value="true" />
+    </context>
+  </template>
+  <template name="ls4" value="persistentEntities.refFor(LikeEntity.class, event.first().chirpId())&#10;    $END$" toReformat="false" toShortenFQNames="true">
+    <context>
+      <option name="JAVA_CODE" value="true" />
+      <option name="JAVA_STATEMENT" value="true" />
+      <option name="JAVA_EXPRESSION" value="true" />
+      <option name="JAVA_DECLARATION" value="true" />
+      <option name="JAVA_COMMENT" value="true" />
+      <option name="JAVA_STRING" value="true" />
+      <option name="COMPLETION" value="true" />
+    </context>
+  </template>
+  <template name="ls5" value=".ask(new LikeCommand.GetLikes())&#10;" toReformat="false" toShortenFQNames="true">
+    <context>
+      <option name="JAVA_CODE" value="true" />
+      <option name="JAVA_STATEMENT" value="true" />
+      <option name="JAVA_EXPRESSION" value="true" />
+      <option name="JAVA_DECLARATION" value="true" />
+      <option name="JAVA_COMMENT" value="true" />
+      <option name="JAVA_STRING" value="true" />
+      <option name="COMPLETION" value="true" />
+    </context>
+  </template>
+  <template name="ls6" value=".thenApply(likers -&gt; new Likes(event.first().chirpId(), &#10;    likers.size(), event.second()))" toReformat="false" toShortenFQNames="true">
+    <context>
+      <option name="JAVA_CODE" value="true" />
+      <option name="JAVA_STATEMENT" value="true" />
+      <option name="JAVA_EXPRESSION" value="true" />
+      <option name="JAVA_DECLARATION" value="true" />
+      <option name="JAVA_COMMENT" value="true" />
+      <option name="JAVA_STRING" value="true" />
+      <option name="COMPLETION" value="true" />
+    </context>
+  </template>
+  <template name="ls3" value="2, event -&gt;&#10;    $END$&#10;" toReformat="false" toShortenFQNames="true">
+    <context>
+      <option name="JAVA_CODE" value="true" />
+      <option name="JAVA_STATEMENT" value="true" />
+      <option name="JAVA_EXPRESSION" value="true" />
+      <option name="JAVA_DECLARATION" value="true" />
+      <option name="JAVA_COMMENT" value="true" />
+      <option name="JAVA_STRING" value="true" />
+      <option name="COMPLETION" value="true" />
+    </context>
+  </template>
+  <template name="a1" value="chirpDao.getLikesOffset().thenCompose(uuid -&gt;&#10;    $END$&#10;)" toReformat="false" toShortenFQNames="true">
+    <context>
+      <option name="JAVA_CODE" value="true" />
+      <option name="JAVA_STATEMENT" value="true" />
+      <option name="JAVA_EXPRESSION" value="true" />
+      <option name="JAVA_DECLARATION" value="true" />
+      <option name="JAVA_COMMENT" value="true" />
+      <option name="JAVA_STRING" value="true" />
+      <option name="COMPLETION" value="true" />
+    </context>
+  </template>
+  <template name="a2" value="likeService.counts().invoke(uuid, NotUsed.getInstance())" toReformat="false" toShortenFQNames="true">
+    <context>
+      <option name="JAVA_CODE" value="true" />
+      <option name="JAVA_STATEMENT" value="true" />
+      <option name="JAVA_EXPRESSION" value="true" />
+      <option name="JAVA_DECLARATION" value="true" />
+      <option name="JAVA_COMMENT" value="true" />
+      <option name="JAVA_STRING" value="true" />
+      <option name="COMPLETION" value="true" />
+    </context>
+  </template>
+  <template name="a3" value=".whenComplete((subscription, error) -&gt; {&#10;  if (error != null) {&#10;    // Send the failure to the actor so that we will get restarted&#10;    self().tell(new Status.Failure(error), self());&#10;  } else {&#10;    $END$&#10;  }&#10;});&#10;" toReformat="false" toShortenFQNames="true">
+    <context>
+      <option name="JAVA_CODE" value="true" />
+      <option name="JAVA_STATEMENT" value="true" />
+      <option name="JAVA_EXPRESSION" value="true" />
+      <option name="JAVA_DECLARATION" value="true" />
+      <option name="JAVA_COMMENT" value="true" />
+      <option name="JAVA_STRING" value="true" />
+      <option name="COMPLETION" value="true" />
+    </context>
+  </template>
+  <template name="a4" value="// mapAsync with parallelism of 1 ensures that messages get processed one at a time, and the&#10;// offset only gets updated if it was successful&#10;subscription.mapAsync(1, chirpDao::updateChirpLikes)&#10;    $END$" toReformat="false" toShortenFQNames="true">
+    <context>
+      <option name="JAVA_CODE" value="true" />
+      <option name="JAVA_STATEMENT" value="true" />
+      <option name="JAVA_EXPRESSION" value="true" />
+      <option name="JAVA_DECLARATION" value="true" />
+      <option name="JAVA_COMMENT" value="true" />
+      <option name="JAVA_STRING" value="true" />
+      <option name="COMPLETION" value="true" />
+    </context>
+  </template>
+  <template name="a5" value="// By feeding to ourselves, we ensure that when we shut down, the stream will be cancelled.&#10;.runWith(Sink.actorRef(self(),&#10;    $END$" toReformat="false" toShortenFQNames="true">
+    <context>
+      <option name="JAVA_CODE" value="true" />
+      <option name="JAVA_STATEMENT" value="true" />
+      <option name="JAVA_EXPRESSION" value="true" />
+      <option name="JAVA_DECLARATION" value="true" />
+      <option name="JAVA_COMMENT" value="true" />
+      <option name="JAVA_STRING" value="true" />
+      <option name="COMPLETION" value="true" />
+    </context>
+  </template>
+  <template name="a6" value="// If the stream terminates (it shouldn't), we need to restart, so send a failure.&#10;new Status.Failure(new Exception(&quot;Stream terminated&quot;))), mat);" toReformat="false" toShortenFQNames="true">
+    <context>
+      <option name="JAVA_CODE" value="true" />
+      <option name="JAVA_STATEMENT" value="true" />
+      <option name="JAVA_EXPRESSION" value="true" />
+      <option name="JAVA_DECLARATION" value="true" />
+      <option name="JAVA_COMMENT" value="true" />
+      <option name="JAVA_STRING" value="true" />
+      <option name="COMPLETION" value="true" />
+    </context>
+  </template>
+  <template name="b1" value="Props likeCountSubscriberProps = Props.create(LikeCountSubscriber.class, likeCountSubscriber::get);&#10;&#10;" toReformat="false" toShortenFQNames="true">
+    <context>
+      <option name="JAVA_CODE" value="true" />
+      <option name="JAVA_STATEMENT" value="true" />
+      <option name="JAVA_EXPRESSION" value="true" />
+      <option name="JAVA_DECLARATION" value="true" />
+      <option name="JAVA_COMMENT" value="true" />
+      <option name="JAVA_STRING" value="true" />
+      <option name="COMPLETION" value="true" />
+    </context>
+  </template>
+  <template name="b2" value="// Backoff supervisor ensures the connection is maintained without hammering the service when&#10;// it fails.&#10;Props backoffSupervisor = BackoffSupervisor.props(&#10;    Backoff.onFailure(&#10;        likeCountSubscriberProps,&#10;        &quot;likeCountSubscriber&quot;,&#10;        Duration.create(3, TimeUnit.SECONDS),&#10;        Duration.create(30, TimeUnit.SECONDS),&#10;        0.2&#10;    )&#10;);&#10;&#10;" toReformat="false" toShortenFQNames="true">
+    <context>
+      <option name="JAVA_CODE" value="true" />
+      <option name="JAVA_STATEMENT" value="true" />
+      <option name="JAVA_EXPRESSION" value="true" />
+      <option name="JAVA_DECLARATION" value="true" />
+      <option name="JAVA_COMMENT" value="true" />
+      <option name="JAVA_STRING" value="true" />
+      <option name="COMPLETION" value="true" />
+    </context>
+  </template>
+  <template name="b3" value="// Use cluster singleton to ensure it only runs on one node&#10;ClusterSingletonManagerSettings settings = ClusterSingletonManagerSettings.create(actorSystem);&#10;return actorSystem.actorOf(&#10;    ClusterSingletonManager.props(backoffSupervisor, PoisonPill.getInstance(), settings),&#10;    &quot;likeCountSubscriberSingleton&quot;&#10;);" toReformat="false" toShortenFQNames="true">
+    <context>
+      <option name="JAVA_CODE" value="true" />
+      <option name="JAVA_STATEMENT" value="true" />
+      <option name="JAVA_EXPRESSION" value="true" />
+      <option name="JAVA_DECLARATION" value="true" />
+      <option name="JAVA_COMMENT" value="true" />
+      <option name="JAVA_STRING" value="true" />
+      <option name="COMPLETION" value="true" />
+    </context>
+  </template>
+  <template name="js1" value="function createFriendsStream(friendIds) {&#10;    $END$&#10;}&#10;" toReformat="false" toShortenFQNames="true">
+    <context>
+      <option name="JAVA_CODE" value="false" />
+      <option name="JAVA_STATEMENT" value="false" />
+      <option name="JAVA_EXPRESSION" value="false" />
+      <option name="JAVA_DECLARATION" value="false" />
+      <option name="JAVA_COMMENT" value="false" />
+      <option name="JAVA_STRING" value="false" />
+      <option name="COMPLETION" value="false" />
+      <option name="JAVA_SCRIPT" value="true" />
+      <option name="JS_EXPRESSION" value="true" />
+      <option name="JSX_HTML" value="true" />
+      <option name="JS_STATEMENT" value="true" />
+    </context>
+  </template>
+  <template name="js2" value="return createStream(&quot;/api/chirpstream/live&quot;, function(stream) {&#10;    $END$&#10;});" toReformat="false" toShortenFQNames="true">
+    <context>
+      <option name="JAVA_CODE" value="false" />
+      <option name="JAVA_STATEMENT" value="false" />
+      <option name="JAVA_EXPRESSION" value="false" />
+      <option name="JAVA_DECLARATION" value="false" />
+      <option name="JAVA_COMMENT" value="false" />
+      <option name="JAVA_STRING" value="false" />
+      <option name="COMPLETION" value="false" />
+      <option name="JAVA_SCRIPT" value="true" />
+      <option name="JS_EXPRESSION" value="true" />
+      <option name="JSX_HTML" value="true" />
+      <option name="JS_STATEMENT" value="true" />
+    </context>
+  </template>
+  <template name="js3" value="stream.send(JSON.stringify({userIds: friendIds}));" toReformat="false" toShortenFQNames="true">
+    <context>
+      <option name="JAVA_CODE" value="false" />
+      <option name="JAVA_STATEMENT" value="false" />
+      <option name="JAVA_EXPRESSION" value="false" />
+      <option name="JAVA_DECLARATION" value="false" />
+      <option name="JAVA_COMMENT" value="false" />
+      <option name="JAVA_STRING" value="false" />
+      <option name="COMPLETION" value="false" />
+      <option name="JAVA_SCRIPT" value="true" />
+      <option name="JS_EXPRESSION" value="true" />
+      <option name="JSX_HTML" value="true" />
+      <option name="JS_STATEMENT" value="true" />
+    </context>
+  </template>
+  <template name="js4" value="var friendIds = currentUser().friends.concat(localStorage.userId);" toReformat="false" toShortenFQNames="true">
+    <context>
+      <option name="JAVA_CODE" value="false" />
+      <option name="JAVA_STATEMENT" value="false" />
+      <option name="JAVA_EXPRESSION" value="false" />
+      <option name="JAVA_DECLARATION" value="false" />
+      <option name="JAVA_COMMENT" value="false" />
+      <option name="JAVA_STRING" value="false" />
+      <option name="COMPLETION" value="false" />
+      <option name="JAVA_SCRIPT" value="true" />
+      <option name="JS_EXPRESSION" value="true" />
+      <option name="JSX_HTML" value="true" />
+      <option name="JS_STATEMENT" value="true" />
+    </context>
+  </template>
+</templateSet>
