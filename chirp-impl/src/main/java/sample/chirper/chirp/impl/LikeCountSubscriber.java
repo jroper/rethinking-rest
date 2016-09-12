@@ -24,7 +24,7 @@ public class LikeCountSubscriber extends UntypedActor {
   @Override
   public void preStart() throws Exception {
     chirpDao.getLikesOffset().thenCompose(uuid ->
-        likeService.counts().invoke(uuid, NotUsed.getInstance())
+        likeService.counts(uuid).invoke(NotUsed.getInstance())
             .whenComplete((subscription, error) -> {
               if (error != null) {
                 // Send the failure to the actor so that we will get restarted

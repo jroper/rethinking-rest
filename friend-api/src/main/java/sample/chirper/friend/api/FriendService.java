@@ -10,13 +10,11 @@ import akka.NotUsed;
 import com.lightbend.lagom.javadsl.api.Descriptor;
 import com.lightbend.lagom.javadsl.api.Service;
 import com.lightbend.lagom.javadsl.api.ServiceCall;
-import com.lightbend.lagom.javadsl.api.deser.IdSerializers;
+import com.lightbend.lagom.javadsl.api.deser.PathParamSerializers;
 import com.lightbend.lagom.javadsl.api.transport.Method;
 import org.pcollections.PSequence;
 import sample.chirper.common.UserId;
 import sample.chirper.common.UserIdentificationStrategy;
-
-import java.util.Arrays;
 
 /**
  * The friend service.
@@ -28,19 +26,19 @@ public interface FriendService extends Service {
    *
    * The ID of this service call is the user name, and the response message is the User object.
    */
-  ServiceCall<UserId, NotUsed, User> getUser();
+  ServiceCall<NotUsed, User> getUser(UserId userId);
 
   /**
    * Service call for creating a user.
    *
    * The request message is the User to create.
    */
-  ServiceCall<NotUsed, User, NotUsed> createUser();
+  ServiceCall<User, NotUsed> createUser();
 
   /**
    * Service call for adding a friend.
    */
-  ServiceCall<FriendRequest, NotUsed, NotUsed> addFriend();
+  ServiceCall<NotUsed, NotUsed> addFriend(UserId userId, UserId friendId);
 
   /**
    * Service call for getting the followers of a user.
@@ -48,22 +46,19 @@ public interface FriendService extends Service {
    * The ID for this service call is the Id of the user to get the followers for.
    * The response message is the list of follower IDs.
    */
-  ServiceCall<UserId, NotUsed, PSequence<UserId>> getFollowers();
+  ServiceCall<NotUsed, PSequence<UserId>> getFollowers(UserId userId);
 
   @Override
   default Descriptor descriptor() {
     // @formatter:off
-    return named("friendservice").with(
-        restCall(Method.GET,    "/api/users/:id", getUser()),
-        restCall(Method.POST,   "/api/users", createUser()),
-        restCall(Method.PUT,    "/api/users/:userId/friends/:friendId", addFriend()),
-        restCall(Method.GET,    "/api/users/:id/followers", getFollowers())
-      ).withAutoAcl(true).with(UserId.class,
-            IdSerializers.create("UserId", UserId::new, UserId::getUserId))
-        .with(FriendRequest.class,
-            IdSerializers.create("FriendRequest", FriendRequest::new, fr -> Arrays.asList(fr.userId, fr.friendId)))
-        .withServiceIdentificationStrategy(UserIdentificationStrategy.INSTANCE);
-
+    return named("friendservice").withCalls(
+        restCall(Method.GET,    "/api/users/:id", this::getUser),
+        restCall(Method.POST,   "/api/users", this::createUser),
+        restCall(Method.PUT,    "/api/users/:userId/friends/:friendId", this::addFriend),
+        restCall(Method.GET,    "/api/users/:id/followers", this::getFollowers)
+      ).withAutoAcl(true).withPathParamSerializer(UserId.class,
+            PathParamSerializers.required("UserId", UserId::new, UserId::getUserId))
+            .withHeaderFilter(UserIdentificationStrategy.INSTANCE);
     // @formatter:on
   }
 }

@@ -1,13 +1,13 @@
 package sample.chirper.common;
 
 import com.google.common.base.Splitter;
-import com.lightbend.lagom.javadsl.api.transport.HeaderTransformer;
+import com.lightbend.lagom.javadsl.api.transport.HeaderFilter;
 import com.lightbend.lagom.javadsl.api.transport.RequestHeader;
 import com.lightbend.lagom.javadsl.api.transport.ResponseHeader;
 
 import java.util.Optional;
 
-public class UserIdentificationStrategy implements HeaderTransformer {
+public class UserIdentificationStrategy implements HeaderFilter {
   public static final UserIdentificationStrategy INSTANCE = new UserIdentificationStrategy();
 
   @Override
