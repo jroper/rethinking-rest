@@ -27,35 +27,35 @@ public class LikeServiceImpl implements LikeService {
   }
 
   @Override
-  public ServiceCall<LikeChirp, NotUsed, NotUsed> likeChirp() {
-    return (likeChirp, request) ->
-      likeEntityRef(likeChirp.chirpId).ask(new LikeCommand.Like(likeChirp.liker))
+  public ServiceCall<NotUsed, NotUsed> likeChirp(UserId userId, String chirpId, UserId liker) {
+    return request ->
+      likeEntityRef(chirpId).ask(new LikeCommand.Like(liker))
         .thenApply(a -> NotUsed.getInstance());
   }
 
   @Override
-  public ServiceCall<LikeChirp, NotUsed, NotUsed> unlikeChirp() {
-    return (likeChirp, request) ->
-        likeEntityRef(likeChirp.chirpId).ask(new LikeCommand.UnLike(likeChirp.liker))
+  public ServiceCall<NotUsed, NotUsed> unlikeChirp(UserId userId, String chirpId, UserId liker) {
+    return request ->
+        likeEntityRef(chirpId).ask(new LikeCommand.UnLike(liker))
           .thenApply(a -> NotUsed.getInstance());
   }
 
   @Override
-  public ServiceCall<ChirpId, NotUsed, PCollection<UserId>> getLikes() {
-    return (chirpId, request) ->
+  public ServiceCall<NotUsed, PCollection<UserId>> getLikes(UserId userId, String chirpId) {
+    return request ->
         likeEntityRef(chirpId).ask(new LikeCommand.GetLikes());
   }
 
   @Override
-  public ServiceCall<Optional<UUID>, NotUsed, Source<Likes, NotUsed>> counts() {
-    return (offset, request) -> {
+  public ServiceCall<NotUsed, Source<Likes, NotUsed>> counts(Optional<UUID> offset) {
+    return request -> {
       throw new UnsupportedOperationException();
     };
 
   }
 
-  private PersistentEntityRef<LikeCommand> likeEntityRef(ChirpId chirpId) {
-    PersistentEntityRef<LikeCommand> ref = persistentEntities.refFor(LikeEntity.class, chirpId.uuid);
+  private PersistentEntityRef<LikeCommand> likeEntityRef(String chirpId) {
+    PersistentEntityRef<LikeCommand> ref = persistentEntities.refFor(LikeEntity.class, chirpId);
     return ref;
   }
 

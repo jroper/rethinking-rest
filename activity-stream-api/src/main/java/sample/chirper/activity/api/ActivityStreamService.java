@@ -3,7 +3,7 @@
  */
 package sample.chirper.activity.api;
 
-import com.lightbend.lagom.javadsl.api.deser.IdSerializers;
+import com.lightbend.lagom.javadsl.api.deser.PathParamSerializers;
 import sample.chirper.chirp.api.Chirp;
 
 import akka.stream.javadsl.Source;
@@ -18,18 +18,18 @@ import static com.lightbend.lagom.javadsl.api.Service.*;
 
 public interface ActivityStreamService extends Service {
 
-  ServiceCall<UserId, NotUsed, Source<Chirp, ?>> getLiveActivityStream();
+  ServiceCall<NotUsed, Source<Chirp, ?>> getLiveActivityStream(UserId userId);
 
-  ServiceCall<UserId, NotUsed, Source<Chirp, ?>> getHistoricalActivityStream();
+  ServiceCall<NotUsed, Source<Chirp, ?>> getHistoricalActivityStream(UserId userId);
 
   @Override
   default Descriptor descriptor() {
     // @formatter:off
-    return named("activityservice").with(
-        pathCall("/api/activity/:userId/live", getLiveActivityStream()),
-        pathCall("/api/activity/:userId/history", getHistoricalActivityStream())
-      ).withAutoAcl(true).with(UserId.class,
-        IdSerializers.create("UserId", UserId::new, UserId::getUserId));
+    return named("activityservice").withCalls(
+        pathCall("/api/activity/:userId/live", this::getLiveActivityStream),
+        pathCall("/api/activity/:userId/history", this::getHistoricalActivityStream)
+      ).withAutoAcl(true).withPathParamSerializer(UserId.class,
+        PathParamSerializers.required("UserId", UserId::new, UserId::getUserId));
     // @formatter:on
   }
 }

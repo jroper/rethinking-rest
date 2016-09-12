@@ -29,7 +29,6 @@ import sample.chirper.chirp.api.HistoricalChirpsRequest;
 import sample.chirper.chirp.api.LiveChirpsRequest;
 import sample.chirper.common.UserId;
 import sample.chirper.common.server.Authenticated;
-import sample.chirper.like.api.ChirpId;
 import sample.chirper.like.api.LikeService;
 
 public class ChirpServiceImpl implements ChirpService {
@@ -47,8 +46,8 @@ public class ChirpServiceImpl implements ChirpService {
   }
 
   @Override
-  public ServiceCall<UserId, Chirp, NotUsed> addChirp() {
-    return Authenticated.enforceUserId((userId, chirp) -> {
+  public ServiceCall<Chirp, NotUsed> addChirp(UserId userId) {
+    return Authenticated.enforceUserId(userId, chirp -> {
       if (!userId.equals(chirp.userId))
         throw new IllegalArgumentException("UserId " + userId + " did not match userId in " + chirp);
       PubSubRef<Chirp> topic = topics.refFor(TopicId.of(Chirp.class, topicQualifier(userId)));
@@ -62,8 +61,8 @@ public class ChirpServiceImpl implements ChirpService {
   }
 
   @Override
-  public ServiceCall<NotUsed, LiveChirpsRequest, Source<Chirp, ?>> getLiveChirps() {
-    return (id, req) -> {
+  public ServiceCall<LiveChirpsRequest, Source<Chirp, ?>> getLiveChirps() {
+    return req -> {
       return recentChirps(req.userIds).thenApply(recentChirps -> {
         List<Source<Chirp, ?>> sources = new ArrayList<>();
         for (UserId userId : req.userIds) {
@@ -83,8 +82,8 @@ public class ChirpServiceImpl implements ChirpService {
   }
 
   @Override
-  public ServiceCall<NotUsed, HistoricalChirpsRequest, Source<Chirp, ?>> getHistoricalChirps() {
-    return (id, req) -> {
+  public ServiceCall<HistoricalChirpsRequest, Source<Chirp, ?>> getHistoricalChirps() {
+    return req -> {
       List<Source<Chirp, ?>> sources = new ArrayList<>();
       for (UserId userId : req.userIds) {
         Source<Chirp, NotUsed> select = chirpDao.getHistoricalChirps(userId, req.fromTime);
@@ -130,8 +129,8 @@ public class ChirpServiceImpl implements ChirpService {
   }
 
   private CompletionStage<Chirp> updateChirpLikes(Chirp chirp) {
-    return likeService.getLikes()
-        .invoke(new ChirpId(chirp.userId, chirp.uuid), NotUsed.getInstance())
+    return likeService.getLikes(chirp.userId, chirp.uuid)
+        .invoke(NotUsed.getInstance())
         .thenApply(likers -> chirp.withLikes(likers.size()));
   }
 }

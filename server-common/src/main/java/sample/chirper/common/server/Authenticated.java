@@ -11,26 +11,18 @@ import java.util.function.Function;
 public class Authenticated {
 
   /**
-   * Enforce that the given UserId identified service call can only be done by that user.
-   */
-  public static <Request, Response> ServerServiceCall<UserId, Request, Response> enforceUserId(ServerServiceCall<UserId, Request, Response> serviceCall) {
-    return enforceUserId(Function.identity(), serviceCall);
-  }
-
-  /**
    * Enforce that the given service call can only be done by the user id that gets extracted from the Id.
    */
-  public static <Id, Request, Response> ServerServiceCall<Id, Request, Response> enforceUserId(
-      Function<Id, UserId> userIdFromid, ServerServiceCall<Id, Request, Response> serviceCall) {
-    return HeaderServiceCall.of((requestHeader, id, request) -> {
-      UserId userId = userIdFromid.apply(id);
+  public static <Request, Response> ServerServiceCall<Request, Response> enforceUserId(
+      UserId userId, ServerServiceCall<Request, Response> serviceCall) {
+    return HeaderServiceCall.of((requestHeader, request) -> {
       Principal principal = requestHeader.principal()
           .orElseGet(() -> { throw new Forbidden("You must be authenticated"); });
 
       if (!userId.equals(principal)) {
         throw new Forbidden("You are not allowed to perform this service call");
       } else {
-        return serviceCall.invokeWithHeaders(requestHeader, id, request);
+        return serviceCall.invokeWithHeaders(requestHeader, request);
       }
     });
   }
